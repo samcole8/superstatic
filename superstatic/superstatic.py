@@ -36,10 +36,11 @@ def serve(path=""):
     except ValueError as e:
         print(e)
         abort(400)
-    # Get target HTML file for request
-    target = convert(request)
-    # Return 404 if not found
-    if not os.path.isfile(target):
-        abort(404)
     else:
-        return construct(target)
+        # Get target HTML file for request
+        target = convert(request)
+        # Return 404 if not found
+        if not os.path.isfile(target):
+            abort(404)
+        else:
+            return construct(target)
