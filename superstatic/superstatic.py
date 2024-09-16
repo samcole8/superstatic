@@ -27,20 +27,13 @@ def construct(target):
     return html
 
 @app.route('/')
-@app.route('/<path:path>')
-def serve(path=""):
+@app.route('/<path:subpath>')
+def serve(subpath="", root=ROOT):
     """Serve an HTTP request."""
-    # Sanitise request
-    try:
-        request = sanitise(ROOT + "/" + path)
-    except ValueError as e:
-        print(e)
-        abort(400)
+    path = os.path.normpath(root + "/" + subpath)
+    target = convert(path)
+    if os.path.isfile(target):
+        response = construct(target)
     else:
-        # Get target HTML file for request
-        target = convert(request)
-        # Return 404 if not found
-        if not os.path.isfile(target):
-            abort(404)
-        else:
-            return construct(target)
+        response = "Not Found", 404
+    return response
