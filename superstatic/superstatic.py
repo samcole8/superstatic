@@ -43,7 +43,7 @@ def serve(subpath="", root=ROOT):
     path = os.path.normpath(root + "/" + subpath)
     target = convert(path)
     if os.path.isfile(target):
-        response = construct(target)
+        response = template(construct(target), path, root)
     else:
         response = "Not Found", 404
     return response
