@@ -1,19 +1,12 @@
-from flask import Flask, abort
+from flask import Flask
+from dotenv import load_dotenv
 import os
 
 app = Flask(__name__)
 
-ROOT = "index"
-
-def sanitise(path):
-    """Check user-input path is within ROOT."""
-    normalised_path = os.path.normpath(path)
-    abspath = os.path.abspath(normalised_path)
-    absroot = os.path.abspath(ROOT)
-    if os.path.commonpath([abspath, absroot]) != absroot:
-        raise ValueError("Path is outside the allowed ROOT directory.")
-    else:
-        return os.path.normpath(path)
+# Load environment variables
+load_dotenv()
+ROOT = os.environ.get("SS_ROOT")
 
 def convert(path):
     """Convert directory path to HTML file location."""
@@ -24,6 +17,23 @@ def construct(target):
     """Construct HTML for provided target."""
     with open(target, "r") as file:
         html = file.read()
+    return html
+
+def template(html, path, root):
+
+    def traverser(start, end):
+        current = start
+        while current != end:
+            yield current
+            current = os.path.dirname(current)
+        yield end
+
+    for directory in traverser(path, root):
+        template = directory + "/template.html"
+        if os.path.isfile(template):
+            with open(template, "r") as file:
+                template_html = file.read()
+            return template_html.replace('<!--template-->', html)
     return html
 
 @app.route('/')
