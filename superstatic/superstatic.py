@@ -9,18 +9,10 @@ app = Flask(__name__)
 load_dotenv()
 ROOT = os.environ.get("SS_ROOT")
 
-def insert_markdown(html, path):
-    md_file = path + "/" + path.split("/")[-1] + ".md"
-    with open(md_file, "r") as file:
-        md = file.read()
-    return html.replace("<!--markdown-->", markdown.markdown(md))
-
-def construct(target, path):
-    """Construct HTML for provided target."""
-    with open(target, "r") as file:
-        html = file.read()
+def markup(html, path):
     if "<!--markdown-->" in html:
-        html = insert_markdown(html, path)
+        fetch(path, "md")
+        html = html.replace("<!--markdown-->", markdown.markdown(md))
     return html
 
 def template(html, path, root):
@@ -40,19 +32,18 @@ def template(html, path, root):
             return template_html.replace('<!--template-->', html)
     return html
 
-def convert(path):
-    """Convert directory path to HTML file location."""
-    html_file = path.split("/")[-1] + ".html"
-    return path + "/" + html_file
+def fetch(path, extension="html"):
+    with open(f"{path}/{path.split("/")[-1]}.{extension}", "r") as file:
+        data = file.read()
+    return data
 
 @app.route('/')
 @app.route('/<path:subpath>')
 def serve(subpath="", root=ROOT):
     """Serve an HTTP request."""
     path = os.path.normpath(root + "/" + subpath)
-    target = convert(path)
-    if os.path.isfile(target):
-        response = template(construct(target, path), path, root)
+    if os.path.exists(path):
+        response = template(markup(fetch(path), path), path, root)
     else:
         response = "Not Found", 404
     return response
