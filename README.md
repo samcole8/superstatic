@@ -33,3 +33,10 @@ Templates allow you to define a consistent layout for your HTML content. Here's 
 - **Location and Naming**: Templates must be called `template.html` and placed in the parent directory of the files they are meant to style.
 - **HTML Insertion**: Templates use the `<!--template-->` tag as a placeholder where the body of your HTML document will be inserted.
 - **Template Hierarchy**: Lower-level templates take priority, which means you can use different templates for different parts of your site.
+
+### Markdown
+
+Superstatic can convert Markdown (`.md` files) to HTML and embed it in your `.html` files.
+
+- **Location & Naming**: `.md` files should follow the same convention as `.html` files, using the same name as their parent folder.
+- **Markdown Insertion**: HTML generated from `.md` files is inserted at any `<!--markdown-->` tag present in the `.html` file.
