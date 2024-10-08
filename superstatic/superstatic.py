@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, send_file
 import argparse
 import os
 from markdown import markdown
@@ -56,9 +56,9 @@ def serve(url_path=""):
         extension = get_extension(entrypoint)
         if extension in EXTENSION_DRIVERS:
             driver = EXTENSION_DRIVERS[extension]
-            response = driver(entrypoint)
         else:
-            response = "418 I'm a Teapot", 418
+            driver = send_file
+        response = driver(entrypoint), 200
     return response
 
 
