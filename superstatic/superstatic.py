@@ -1,11 +1,34 @@
 from flask import Flask
 import argparse
 import os
+from markdown import markdown
 
 superstatic = Flask(__name__)
 
 
-EXTENSIONS = ["html", "md"]
+def read(file_path):
+    with open(file_path, "r") as file:
+        file_contents = file.read()
+    return file_contents
+
+
+def send_html(file_path):
+    html = read(file_path)
+    return html
+
+
+def send_md(file_path):
+    md = read(file_path)
+    html = markdown(md)
+    return html
+
+
+EXTENSION_DRIVERS = {"html": send_html, "md": send_md}
+
+
+def get_extension(file_path):
+    _, extension = os.path.splitext(file_path)
+    return extension.lstrip(".")
 
 
 def map_url(url_path):
@@ -14,7 +37,7 @@ def map_url(url_path):
     if os.path.isfile(request):
         entrypoint = request
     elif os.path.isdir(request):
-        for key in reversed(EXTENSIONS):
+        for key in reversed(EXTENSION_DRIVERS.keys()):
             test_entrypoint = request + "/index." + key
             if os.path.isfile(test_entrypoint):
                 entrypoint = test_entrypoint
@@ -25,7 +48,18 @@ def map_url(url_path):
 @superstatic.route("/<path:url_path>")
 def serve(url_path=""):
     entrypoint = map_url(url_path)
-    return "OK"
+    if entrypoint is None:
+        # Serve 404 if entrypoint doesn't exist.
+        response = "404 Not Found", 404
+    else:
+        # Serve entrypoint
+        extension = get_extension(entrypoint)
+        if extension in EXTENSION_DRIVERS:
+            driver = EXTENSION_DRIVERS[extension]
+            response = driver(entrypoint)
+        else:
+            response = "418 I'm a Teapot", 418
+    return response
 
 
 if __name__ == "__main__":
