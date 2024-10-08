@@ -6,24 +6,30 @@ from markdown import markdown
 superstatic = Flask(__name__)
 
 
+def render_template(body, code=200):
+    template = read(superstatic.config["TEMPLATE"])
+    body = template.replace("<!--body-->", body)
+    return body, code
+
+
 def read(file_path):
     with open(file_path, "r") as file:
         file_contents = file.read()
     return file_contents
 
 
-def send_html(file_path):
+def load_html(file_path):
     html = read(file_path)
     return html
 
 
-def send_md(file_path):
+def load_md(file_path):
     md = read(file_path)
     html = markdown(md)
     return html
 
 
-EXTENSION_DRIVERS = {"html": send_html, "md": send_md}
+EXTENSION_DRIVERS = {"html": load_html, "md": load_md}
 
 
 def get_extension(file_path):
@@ -47,6 +53,7 @@ def map_url(url_path):
 @superstatic.route("/")
 @superstatic.route("/<path:url_path>")
 def serve(url_path=""):
+    render = True
     entrypoint = map_url(url_path)
     if entrypoint is None:
         # Serve 404 if entrypoint doesn't exist.
@@ -56,9 +63,17 @@ def serve(url_path=""):
         extension = get_extension(entrypoint)
         if extension in EXTENSION_DRIVERS:
             driver = EXTENSION_DRIVERS[extension]
+            response = driver(entrypoint), 200
         else:
-            driver = send_file
-        response = driver(entrypoint), 200
+            render = False
+    # Check if entrypoint can be rendered
+    if render is True:
+        # Template entrypoint if specified
+        if superstatic.config["TEMPLATE"]:
+            response = render_template(*response)
+    else:
+        # Send unrenderable file
+        response = send_file(entrypoint)
     return response
 
 
