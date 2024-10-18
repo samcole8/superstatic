@@ -50,30 +50,33 @@ def map_url(url_path):
     return entrypoint
 
 
+def gen_response(entrypoint):
+    print(entrypoint)
+    extension = get_extension(entrypoint)
+    # if extension is recognised and renderable
+    if extension in EXTENSION_DRIVERS:
+        # Build response using driver
+        driver = EXTENSION_DRIVERS[extension]
+        response = driver(entrypoint), 200
+        # Template entrypoint
+        if superstatic.config["TEMPLATE"]:
+            response = render_template(*response)
+    else:
+        # Return unrendered file
+        response = send_file(entrypoint)
+    return response
+
+
 @superstatic.route("/")
 @superstatic.route("/<path:url_path>")
 def serve(url_path=""):
-    render = True
     entrypoint = map_url(url_path)
     if entrypoint is None:
         # Serve 404 if entrypoint doesn't exist.
         response = "404 Not Found", 404
     else:
         # Serve entrypoint
-        extension = get_extension(entrypoint)
-        if extension in EXTENSION_DRIVERS:
-            driver = EXTENSION_DRIVERS[extension]
-            response = driver(entrypoint), 200
-        else:
-            render = False
-    # Check if entrypoint can be rendered
-    if render is True:
-        # Template entrypoint if specified
-        if superstatic.config["TEMPLATE"]:
-            response = render_template(*response)
-    else:
-        # Send unrenderable file
-        response = send_file(entrypoint)
+        response = gen_response(entrypoint)
     return response
 
 
